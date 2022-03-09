@@ -24,11 +24,14 @@ const userSchema = new mongoose.Schema({
         required : true
     },
     MobileNumber : {
-        type : Number,
+        type : String,
         unique : true,
         required : true
     },
     DOB : {
+        type : String
+    },
+    DP : {
         type : String
     }
 })

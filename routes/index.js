@@ -3,6 +3,101 @@ var { User } = require('../models/User')
 var router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const path = require('path')
+
+// Uploading image using multer
+
+const PATH = './routes/images/profile';
+const filename =""
+let filedata
+
+let storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        filedata = file
+      cb(null, PATH);
+    },
+    filename: (req, file, cb) => {
+      cb(null, file.originalname)
+    }
+  }); 
+
+  let upload = multer({
+    storage: storage
+  });
+
+
+router.post('/dpimg',upload.single('image'),function(req,res,next){
+    jwt.verify(req.body.token,process.env.SECRET,async function(err,decoded){
+        if(err)
+        {
+            console.log(" error showing ",err);
+        }
+        if(decoded)
+        {
+        try{
+            if (!req.file) {
+                return res.status(500).json({
+                    Pic : false
+                })
+            
+            } else {
+                var data = await User.findOne({_id:filedata.originalname})
+                if(data != null)
+                {
+                    data = await User.updateOne({_id:filedata.originalname},{DP:filedata.originalname});
+                    if(data != null) {
+                        return res.status(200).json({
+                            Pic : filedata.originalname
+                        })
+                    }
+                    else {
+                        return res.status(500).json({
+                            Pic : false
+                        })
+                    }
+                }
+            }
+        }catch(err){
+            return res.status(500).json({
+                Pic : false
+            })
+        }   
+    }
+})
+})
+
+// Get my DP pic
+router.get('/getDpImg/:token', async function(req,res,next) {
+    jwt.verify(req.params.token,process.env.SECRET,async function(err,decoded){
+        if(err)
+        {
+            console.log(" error showing ",err);
+        }
+        if(decoded)
+        {
+            id = decoded._id;
+            console.log(__dirname, decoded);
+            return res.status(200).sendFile(__dirname+'/images/profile/'+id);
+        }
+    })
+})
+
+// Get others DP pic
+router.get('/getODpImg/:token/:id', async function(req,res,next) {
+    jwt.verify(req.params.token,process.env.SECRET,async function(err,decoded){
+        if(err)
+        {
+            console.log(" error showing ",err);
+        }
+        if(decoded)
+        {
+            id = req.params.id;
+            console.log(id);
+            return res.status(200).sendFile(__dirname+'/images/profile/'+req.params.id);
+        }
+    })
+})
 
 // Registering User
 router.post('/register', async function(req, res, next) {
@@ -106,5 +201,8 @@ router.post('/login', async function(req, res, next) {
         }
     })
 });
+
+
+
 
 module.exports = router;
